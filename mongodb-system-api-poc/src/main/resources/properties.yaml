@@ -1,0 +1,10 @@
+####Properties####
+
+db:
+  server: 'localhost:27017'
+  username: 'myUserAdmin'
+  password: 'abc123'
+  database: 'inventory'
+
+
+

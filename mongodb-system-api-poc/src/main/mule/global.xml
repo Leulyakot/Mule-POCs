@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:mongo="http://www.mulesoft.org/schema/mule/mongo" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/mongo http://www.mulesoft.org/schema/mule/mongo/current/mule-mongo.xsd">
+	<mongo:config name="MongoDB_Config" doc:name="MongoDB Config" doc:id="cb93e5ba-98e7-4539-911a-78907e13398a" >
+		<mongo:connection host="${db.server}" username="${db.username}" password="${db.password}" database="${db.database}"/>
+	</mongo:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="df1f63b1-e032-4a76-bf48-3f74ac9a4ae0" file="properties.yaml" />
+	<error-handler name="globalError_Handler" doc:id="75f727f1-f857-4cfb-a9df-e5662501a184" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="690b50ac-2e05-4320-9e94-ee370f2ab91f" type="ANY">
+			<ee:transform doc:name="Transform Message" doc:id="b42e9b51-ae15-4de1-9f1b-0c6ec76c7520" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	ErrorMessage: error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+</mule>

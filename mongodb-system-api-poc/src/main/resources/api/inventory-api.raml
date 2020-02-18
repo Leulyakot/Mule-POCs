@@ -1,0 +1,32 @@
+#%RAML 1.0
+title: Sample API
+
+
+/inventory:
+  /find:
+    get:
+      queryParameters:
+        item:
+          example: "laptop"
+          type : string    
+      responses:
+        200:
+          body:
+            application/json:
+              example: { item: "whiteboard", qty: 60, tags: ["electronics"], size: { h: 10, w: 20, uom: "cm" } }
+   
+              
+  /addinventory:
+    post:
+      body:
+        application/json:
+          example: { item: "whiteboard", qty: 60, tags: ["electronics"], size: { h: 10, w: 20, uom: "cm" } }
+      responses:
+        200:
+          body:
+            application/json:
+              example: "Document created Successfully"
+        
+        
+        
+        
