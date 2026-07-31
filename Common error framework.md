@@ -12,7 +12,7 @@ Both platforms map native errors into a Canonical Error Envelope and persist the
 - Enable centralized monitoring & analytics
 - Support faster triage and root-cause analysis
 - Provide consistent error taxonomy and governance
-
+kpJbo9tuJt/vXhh7/0UYOcS5KixhNrh0G3flSy9fDZE=
 ---
 
 ## 2. High-Level Architecture
