@@ -1,7 +1,9 @@
 
 # Common Error Framework  
 SAP PI/PO & MuleSoft – Unified Error Handling via JDBC
-
+Property	Encrypted value
+password	TG+581BUSNMMor3PilNJUyw1FXgWYLVUqVpzWibM+lk=
+token	Ix6eL5iXwSjEgg8Qir84vrQcfsDQg7HLLffsS+GfnKg=
 ## 1. Overview
 This document defines a Common Error Framework used by SAP PI/PO and MuleSoft to standardize error handling, persistence, reporting, and troubleshooting across middleware platforms.
 
