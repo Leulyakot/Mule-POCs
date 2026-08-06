@@ -1,0 +1,278 @@
+#%RAML 1.0
+title: Generic Items API
+version: v1
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+protocols: [ HTTPS ]
+
+description: |
+  A generic REST API exposing three GET endpoints:
+    1. GET /items                     - paged, filterable collection
+    2. GET /items/{itemId}            - single resource by id
+    3. GET /items/{itemId}/history    - sub-collection scoped to a parent
+
+types:
+
+  Item:
+    type: object
+    properties:
+      id:          { type: string,  required: true,  example: "ITM-000123" }
+      name:        { type: string,  required: true,  example: "Blue Widget" }
+      category:    { type: string,  required: true,  example: "hardware" }
+      status:      { type: string,  required: true,  enum: [ ACTIVE, INACTIVE, ARCHIVED ] }
+      price:       { type: number,  required: false, format: double, example: 24.99 }
+      quantity:    { type: integer, required: false, example: 150 }
+      createdDate: { type: datetime, required: true }
+      updatedDate: { type: datetime, required: false }
+    example:
+      id: "ITM-000123"
+      name: "Blue Widget"
+      category: "hardware"
+      status: "ACTIVE"
+      price: 24.99
+      quantity: 150
+      createdDate: 2026-01-15T10:30:00Z
+      updatedDate: 2026-06-02T08:12:45Z
+
+  ItemCollection:
+    type: object
+    properties:
+      data:       { type: Item[], required: true }
+      pagination: { type: Pagination, required: true }
+    example:
+      data:
+        - id: "ITM-000123"
+          name: "Blue Widget"
+          category: "hardware"
+          status: "ACTIVE"
+          price: 24.99
+          quantity: 150
+          createdDate: 2026-01-15T10:30:00Z
+          updatedDate: 2026-06-02T08:12:45Z
+        - id: "ITM-000124"
+          name: "Red Widget"
+          category: "hardware"
+          status: "INACTIVE"
+          price: 19.50
+          quantity: 0
+          createdDate: 2026-02-01T14:05:00Z
+          updatedDate: 2026-05-20T09:00:00Z
+      pagination:
+        offset: 0
+        limit: 25
+        totalCount: 2
+        hasMore: false
+
+  Pagination:
+    type: object
+    properties:
+      offset:     { type: integer, required: true,  example: 0 }
+      limit:      { type: integer, required: true,  example: 25 }
+      totalCount: { type: integer, required: true,  example: 2 }
+      hasMore:    { type: boolean, required: true,  example: false }
+
+  HistoryEntry:
+    type: object
+    properties:
+      eventId:   { type: string,   required: true,  example: "EVT-9001" }
+      eventType: { type: string,   required: true,  enum: [ CREATED, UPDATED, STATUS_CHANGED, ARCHIVED ] }
+      changedBy: { type: string,   required: true,  example: "system.user" }
+      eventDate: { type: datetime, required: true }
+      details:   { type: string,   required: false, example: "status changed from ACTIVE to INACTIVE" }
+
+  HistoryCollection:
+    type: object
+    properties:
+      itemId:     { type: string, required: true }
+      data:       { type: HistoryEntry[], required: true }
+      pagination: { type: Pagination, required: true }
+    example:
+      itemId: "ITM-000123"
+      data:
+        - eventId: "EVT-9001"
+          eventType: "CREATED"
+          changedBy: "system.user"
+          eventDate: 2026-01-15T10:30:00Z
+          details: "record created"
+        - eventId: "EVT-9042"
+          eventType: "STATUS_CHANGED"
+          changedBy: "jdoe"
+          eventDate: 2026-06-02T08:12:45Z
+          details: "status changed from ACTIVE to INACTIVE"
+      pagination:
+        offset: 0
+        limit: 25
+        totalCount: 2
+        hasMore: false
+
+  ErrorResponse:
+    type: object
+    properties:
+      errorCode:    { type: string, required: true,  example: "ITEM_NOT_FOUND" }
+      errorMessage: { type: string, required: true,  example: "No item exists for the supplied identifier." }
+      timestamp:    { type: datetime, required: true }
+      transactionId:{ type: string, required: false, example: "b7f3c2e1-88aa-4f19-9d0e-6c2a5f9d1234" }
+    example:
+      errorCode: "ITEM_NOT_FOUND"
+      errorMessage: "No item exists for the supplied identifier."
+      timestamp: 2026-08-06T12:00:00Z
+      transactionId: "b7f3c2e1-88aa-4f19-9d0e-6c2a5f9d1234"
+
+traits:
+
+  paged:
+    queryParameters:
+      offset:
+        type: integer
+        required: false
+        default: 0
+        minimum: 0
+        description: Number of records to skip.
+        example: 0
+      limit:
+        type: integer
+        required: false
+        default: 25
+        minimum: 1
+        maximum: 200
+        description: Maximum number of records to return.
+        example: 25
+
+  sortable:
+    queryParameters:
+      sortBy:
+        type: string
+        required: false
+        default: createdDate
+        description: Field name used for ordering.
+        example: name
+      sortOrder:
+        type: string
+        required: false
+        default: DESC
+        enum: [ ASC, DESC ]
+        example: ASC
+
+  hasErrorResponses:
+    responses:
+      400:
+        description: Malformed request or invalid query parameter.
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              errorCode: "INVALID_QUERY_PARAM"
+              errorMessage: "limit must be between 1 and 200."
+              timestamp: 2026-08-06T12:00:00Z
+              transactionId: "b7f3c2e1-88aa-4f19-9d0e-6c2a5f9d1234"
+      404:
+        description: Resource not found.
+        body:
+          application/json:
+            type: ErrorResponse
+      500:
+        description: Unexpected server error.
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              errorCode: "INTERNAL_ERROR"
+              errorMessage: "An unexpected error occurred. Please retry."
+              timestamp: 2026-08-06T12:00:00Z
+              transactionId: "b7f3c2e1-88aa-4f19-9d0e-6c2a5f9d1234"
+
+/items:
+  displayName: Items
+  get:
+    displayName: Get items
+    description: Returns a paged collection of items filtered by the supplied query parameters.
+    is: [ paged, sortable, hasErrorResponses ]
+    queryParameters:
+      category:
+        type: string
+        required: false
+        description: Filter by category.
+        example: hardware
+      status:
+        type: string
+        required: false
+        enum: [ ACTIVE, INACTIVE, ARCHIVED ]
+        example: ACTIVE
+      search:
+        type: string
+        required: false
+        minLength: 2
+        description: Free text match against the item name.
+        example: widget
+      createdFrom:
+        type: date-only
+        required: false
+        example: 2026-01-01
+      createdTo:
+        type: date-only
+        required: false
+        example: 2026-12-31
+    responses:
+      200:
+        description: Collection retrieved successfully.
+        body:
+          application/json:
+            type: ItemCollection
+
+  /{itemId}:
+    uriParameters:
+      itemId:
+        type: string
+        description: Unique identifier of the item.
+        example: "ITM-000123"
+    get:
+      displayName: Get item by id
+      description: Returns a single item resource.
+      is: [ hasErrorResponses ]
+      queryParameters:
+        fields:
+          type: string
+          required: false
+          description: Comma separated list of fields to include in the response.
+          example: "id,name,status"
+        includeInactive:
+          type: boolean
+          required: false
+          default: false
+          example: true
+      responses:
+        200:
+          description: Item retrieved successfully.
+          body:
+            application/json:
+              type: Item
+
+    /history:
+      get:
+        displayName: Get item history
+        description: Returns the audit history for a single item.
+        is: [ paged, sortable, hasErrorResponses ]
+        queryParameters:
+          eventType:
+            type: string
+            required: false
+            enum: [ CREATED, UPDATED, STATUS_CHANGED, ARCHIVED ]
+            example: STATUS_CHANGED
+          fromDate:
+            type: datetime
+            required: false
+            example: 2026-01-01T00:00:00Z
+          toDate:
+            type: datetime
+            required: false
+            example: 2026-12-31T23:59:59Z
+          changedBy:
+            type: string
+            required: false
+            example: jdoe
+        responses:
+          200:
+            description: History retrieved successfully.
+            body:
+              application/json:
+                type: HistoryCollection
